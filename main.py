@@ -1,53 +1,53 @@
 import os
-from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from ai import generate_story
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, CallbackQueryHandler
+from ai import generate_story, generate_capcut_prompts
 
-load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🎬 Shorts Factory Bot\n\n"
-        "Choose a story with one click:\n\n"
-        "/horror30 - Horror story (30s)\n"
-        "/horror60 - Horror story (60s)\n"
-        "/mystery30 - Mystery story (30s)\n"
-        "/mystery60 - Mystery story (60s)\n\n"
-        "The bot works in groups too."
-    )
+# Story genres and durations
+GENRES = {
+    "horror_short": ("horror", "30"),
+    "horror_60": ("horror", "60"),
+    "horror_120": ("horror", "120"),
+    "mystery_short": ("mystery", "30"),
+    "mystery_60": ("mystery", "60"),
+    "mystery_120": ("mystery", "120")
+}
 
-async def horror30(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🧠 Generating horror story (30s)...")
-    story = generate_story("horror", 30)
-    await update.message.reply_text(story)
+def start(update: Update, context: CallbackContext):
+    keyboard = []
+    for cmd in GENRES:
+        keyboard.append([InlineKeyboardButton(cmd.replace("_", " ").title(), callback_data=cmd)])
+    keyboard.append([InlineKeyboardButton("CapCut Prompts", callback_data="capcut")])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text("Choose a story type:", reply_markup=reply_markup)
 
-async def horror60(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🧠 Generating horror story (60s)...")
-    story = generate_story("horror", 60)
-    await update.message.reply_text(story)
-
-async def mystery30(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🧠 Generating mystery story (30s)...")
-    story = generate_story("mystery", 30)
-    await update.message.reply_text(story)
-
-async def mystery60(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🧠 Generating mystery story (60s)...")
-    story = generate_story("mystery", 60)
-    await update.message.reply_text(story)
+def button(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    
+    data = query.data
+    if data == "capcut":
+        query.edit_message_text(text="Please generate a story first using one of the genres.")
+        return
+    
+    genre, duration = GENRES[data]
+    story = generate_story(genre, duration)
+    
+    if story:
+        query.edit_message_text(text=f"Generated story ({genre}, {duration}s):\n\n{story}")
+        prompts = generate_capcut_prompts(story)
+        prompt_text = "\n".join([f"{p['scene']}: {p['prompt']}" for p in prompts])
+        query.message.reply_text(f"CapCut Prompts:\n{prompt_text}")
+    else:
+        query.edit_message_text(text="❌ AI failed to generate story.")
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("horror30", horror30))
-    app.add_handler(CommandHandler("horror60", horror60))
-    app.add_handler(CommandHandler("mystery30", mystery30))
-    app.add_handler(CommandHandler("mystery60", mystery60))
-
-    print("🤖 Bot is running...")
+    app.add_handler(CallbackQueryHandler(button))
+    print("Bot started...")
     app.run_polling()
 
 if __name__ == "__main__":
