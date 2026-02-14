@@ -1,41 +1,47 @@
 import os
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-HEADERS = {
-    "Authorization": f"Bearer {GROQ_API_KEY}",
-    "Content-Type": "application/json"
-}
-
-def generate_story(category: str, duration: int) -> str:
-    prompt = f"""
-Create a realistic {category} story for YouTube Shorts.
-Language: English.
-Total length: about {duration} seconds.
-Return ONLY this format (no extra text):
-
-Scene 1 - cinematic visual prompt
-Scene 2 - cinematic visual prompt
-Scene 3 - cinematic visual prompt
-Scene 4 - cinematic visual prompt
-"""
-
-    payload = {
-        "model": "llama-3.1-70b-versatile",
-        "messages": [
-            {"role": "system", "content": "You are a professional horror/mystery short-form video director."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.8
+def generate_story(genre="horror", duration="30"):
+    """
+    Generate story text using Groq API
+    genre: horror, mystery, etc.
+    duration: seconds
+    """
+    prompt = f"Generate a {duration} second {genre} short story in English."
+    
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
     }
+    data = {
+        "model": "groq-chat",
+        "messages": [{"role": "user", "content": prompt}]
+    }
+    
+    response = requests.post("https://api.groq.com/openai/v1/chat/completions",
+                             headers=headers, json=data)
+    
+    if response.status_code == 200:
+        result = response.json()
+        story_text = result['choices'][0]['message']['content']
+        return story_text
+    else:
+        print(f"❌ AI request failed: {response.text}")
+        return None
 
-    r = requests.post(GROQ_URL, headers=HEADERS, json=payload, timeout=60)
-    r.raise_for_status()
-    data = r.json()
-
-    return data["choices"][0]["message"]["content"]
+def generate_capcut_prompts(story_text):
+    """
+    Convert story into scene-prompt list for CapCut
+    Returns list of dict: [{"scene": "Scene 1", "prompt": "..."}]
+    """
+    scenes = []
+    sentences = story_text.split(". ")
+    for i, sentence in enumerate(sentences):
+        if sentence.strip():
+            scenes.append({
+                "scene": f"Scene {i+1}",
+                "prompt": sentence.strip()
+            })
+    return scenes
