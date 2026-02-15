@@ -2,7 +2,6 @@ import os
 import tempfile
 import subprocess
 import requests
-import replicate
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -57,26 +56,31 @@ Hikaye:
 
 
 def generate_image(prompt, index):
-    client = replicate.Client(api_token=REPLICATE_API_TOKEN)
+    API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    headers = {
+        "Authorization": f"Bearer {os.getenv('HF_API_KEY')}"
+    }
 
-    output = client.run(
-        "stability-ai/sdxl:latest",
-        input={
-            "prompt": prompt,
-            "width": 768,
-            "height": 1024
-        }
-    )
+    payload = {
+        "inputs": f"{prompt}, cinematic lighting, ultra realistic, 9:16 vertical",
+        "options": {"wait_for_model": True}
+    }
 
-    image_url = output[0]
-    response = requests.get(image_url)
+    response = requests.post(API_URL, headers=headers, json=payload)
+
+    if response.status_code != 200:
+        raise Exception(f"HF Error: {response.text}")
+
+    image = Image.open(BytesIO(response.content))
+
+    # 9:16 crop
+    image = image.resize((768, 1024))
 
     file_path = f"scene_{index}.png"
-
-    with open(file_path, "wb") as f:
-        f.write(response.content)
+    image.save(file_path)
 
     return file_path
+
 
 
 def generate_voice(text):
