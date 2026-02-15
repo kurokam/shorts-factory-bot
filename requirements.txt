@@ -7,3 +7,6 @@ requests
 ffmpeg-python
 groq
 pillow
+moviepy
+imageio
+imageio-ffmpeg
