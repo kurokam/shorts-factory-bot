@@ -103,8 +103,6 @@ def generate_image(prompt, index):
 
 def generate_voice(text):
     tts = gTTS(text=text, lang="tr")
-    # gTTS ile ses üret
-    tts = gTTS(clean_text, lang="en")  # dil İngilizce
     output_file = "voice.mp3"
     tts.save(output_file)
 
