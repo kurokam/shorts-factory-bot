@@ -1,21 +1,16 @@
-import os
-import replicate
-
 def generate_image(prompt, index):
-    client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
+    client = replicate.Client(api_token=REPLICATE_API_TOKEN)
 
     output = client.run(
-        "stability-ai/sdxl:latest",
+        "black-forest-labs/flux-schnell",
         input={
             "prompt": prompt,
-            "width": 768,
-            "height": 1024
+            "aspect_ratio": "9:16"
         }
     )
 
     image_url = output[0]
 
-    import requests
     response = requests.get(image_url)
     file_path = f"scene_{index}.png"
 
