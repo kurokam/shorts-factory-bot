@@ -20,7 +20,7 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+ELEVEN_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 VOICE_ID = "EXAVITQu4vr4xnSDxMaL"  # örnek voice (Rachel)
 ELEVEN_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
 client = Groq(api_key=GROQ_API_KEY)
