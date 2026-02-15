@@ -2,6 +2,7 @@ import os
 import tempfile
 import subprocess
 import requests
+from gtts import gTTS
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -101,14 +102,7 @@ def generate_image(prompt, index):
 
 
 def generate_voice(text):
-    """
-    Converts text to speech using gTTS.
-    Removes punctuation so TTS does not read symbols.
-    Returns the filename of the generated audio.
-    """
-    # Noktalama işaretlerini temizle (sadece harf ve boşluk kalır)
-    clean_text = re.sub(r'[^\w\s]', '', text)
-
+    tts = gTTS(text=text, lang="tr")
     # gTTS ile ses üret
     tts = gTTS(clean_text, lang="en")  # dil İngilizce
     output_file = "voice.mp3"
