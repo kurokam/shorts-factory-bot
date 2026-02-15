@@ -101,24 +101,27 @@ def generate_image(prompt, index):
 
 
 def generate_voice(text):
-    url = "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM"
 
-    headers = {
-        "xi-api-key": ELEVENLABS_API_KEY,
-        "Content-Type": "application/json"
-    }
-
-    data = {
+    payload = {
         "text": text,
-        "model_id": "eleven_monolingual_v1"
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "pcm_44100"   # 👈 BURASI EKLENDİ
     }
 
-    response = requests.post(url, json=data, headers=headers)
+    response = requests.post(
+        ELEVEN_URL,
+        headers=headers,
+        json=payload
+    )
 
-    with open("voice.mp3", "wb") as f:
+    if response.status_code != 200:
+        print("TTS ERROR:", response.text)
+        raise Exception("Voice generation failed")
+
+    with open("voice.wav", "wb") as f:   # 👈 mp3 değil wav
         f.write(response.content)
 
-    return "voice.mp3"
+    return "voice.wav"
 
 
 def build_video(images, audio_file, duration_per_image):
