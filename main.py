@@ -103,42 +103,14 @@ def generate_image(prompt, index):
 
 def generate_voice(text):
 
-    import os
-    import requests
+    from gtts import gTTS
 
-    ELEVEN_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-    VOICE_ID = "EXAVITQu4vr4xnSDxMaL"
+    tts = gTTS(text=text, lang="tr")
 
-    ELEVEN_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
+    file_path = "voice.mp3"
+    tts.save(file_path)
 
-    headers = {
-        "xi-api-key": ELEVEN_API_KEY,
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "text": text,
-        "model_id": "eleven_multilingual_v2",
-        "output_format": "pcm_44100"
-    }
-
-    response = requests.post(
-        ELEVEN_URL,
-        headers=headers,
-        json=payload
-    )
-    print("STATUS:", response.status_code)
-    print("RESPONSE:", response.text)
-
-    if response.status_code != 200:
-        print("TTS ERROR:", response.text)
-        raise Exception("Voice generation failed")
-
-    with open("voice.wav", "wb") as f:
-        f.write(response.content)
-
-    return "voice.wav"
-
+    return file_path
 
 
 def build_video(images, audio_file, duration_per_image):
