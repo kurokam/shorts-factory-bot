@@ -1,35 +1,25 @@
 import os
 import json
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
-def get_client_config():
-    raw = os.getenv("GOOGLE_CLIENT_JSON")
-    if not raw:
-        raise Exception("GOOGLE_CLIENT_JSON not set in ENV")
-    return json.loads(raw)
+def get_youtube_service():
+    token_json = os.getenv("YOUTUBE_TOKEN_JSON")
+    if not token_json:
+        raise Exception("YOUTUBE_TOKEN_JSON not set")
 
-def authorize_youtube():
-    client_config = get_client_config()
-    flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
-    creds = flow.run_local_server(port=0)  # Only works on PC
-    # Save token for later
-    with open("token.json", "w") as f:
-        f.write(creds.to_json())
-    return creds
+    creds = Credentials.from_authorized_user_info(
+        json.loads(token_json), SCOPES
+    )
 
-def upload_video(video_file, title, description, tags=None):
-    creds = None
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    else:
-        creds = authorize_youtube()
-    
-    youtube = build("youtube", "v3", credentials=creds)
-    
+    return build("youtube", "v3", credentials=creds)
+
+def upload_video(video_path, title, description, tags=None):
+    youtube = get_youtube_service()
+
     request = youtube.videos().insert(
         part="snippet,status",
         body={
@@ -37,14 +27,14 @@ def upload_video(video_file, title, description, tags=None):
                 "title": title,
                 "description": description,
                 "tags": tags or [],
-                "categoryId": "22"  # People & Blogs
+                "categoryId": "22"
             },
             "status": {
                 "privacyStatus": "public"
             }
         },
-        media_body=video_file
+        media_body=MediaFileUpload(video_path)
     )
+
     response = request.execute()
-    print("✅ Uploaded video:", response.get("id"))
     return response.get("id")
