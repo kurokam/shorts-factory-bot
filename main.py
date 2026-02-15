@@ -10,6 +10,7 @@ from telegram.ext import (
 )
 from PIL import Image
 from io import BytesIO
+import urllib.parse
 from groq import Groq
 from youtube_manager import upload_video
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
@@ -57,13 +58,20 @@ Hikaye:
     return [s.strip() for s in scenes if len(s.strip()) > 10]
 
 
+
 def generate_image(prompt, index):
 
-    image_url = f"https://image.pollinations.ai/prompt/{prompt}, cinematic lighting, vertical 9:16"
+    clean_prompt = urllib.parse.quote(
+        f"{prompt}, cinematic lighting, ultra realistic, vertical 9:16"
+    )
 
-    response = requests.get(image_url)
+    image_url = f"https://image.pollinations.ai/prompt/{clean_prompt}"
+
+    response = requests.get(image_url, timeout=60)
 
     if response.status_code != 200:
+        print("Status:", response.status_code)
+        print("Response:", response.text)
         raise Exception("Pollinations error")
 
     image = Image.open(BytesIO(response.content))
@@ -73,7 +81,6 @@ def generate_image(prompt, index):
     image.save(file_path)
 
     return file_path
-
 
 
 def generate_voice(text):
