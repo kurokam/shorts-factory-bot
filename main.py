@@ -8,6 +8,8 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
 )
+from PIL import Image
+from io import BytesIO
 from groq import Groq
 from youtube_manager import upload_video
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
@@ -56,13 +58,15 @@ Hikaye:
 
 
 def generate_image(prompt, index):
-    API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    API_URL = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
+
     headers = {
-        "Authorization": f"Bearer {os.getenv('HF_API_KEY')}"
+        "Authorization": f"Bearer {os.getenv('HF_API_KEY')}",
+        "Content-Type": "application/json"
     }
 
     payload = {
-        "inputs": f"{prompt}, cinematic lighting, ultra realistic, 9:16 vertical",
+        "inputs": f"{prompt}, cinematic lighting, ultra realistic, vertical 9:16",
         "options": {"wait_for_model": True}
     }
 
@@ -73,7 +77,6 @@ def generate_image(prompt, index):
 
     image = Image.open(BytesIO(response.content))
 
-    # 9:16 crop
     image = image.resize((768, 1024))
 
     file_path = f"scene_{index}.png"
