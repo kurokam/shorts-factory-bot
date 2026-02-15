@@ -101,16 +101,25 @@ def generate_image(prompt, index):
 
 
 
+# ---------------- GENERATE VOICE ---------------- #
+from gtts import gTTS
+import re
+
 def generate_voice(text):
+    """
+    Converts text to speech using gTTS.
+    Removes punctuation so TTS does not read symbols.
+    Returns the filename of the generated audio.
+    """
+    # Noktalama işaretlerini temizle (sadece harf ve boşluk kalır)
+    clean_text = re.sub(r'[^\w\s]', '', text)
 
-    from gtts import gTTS
+    # gTTS ile ses üret
+    tts = gTTS(clean_text, lang="en")  # dil İngilizce
+    output_file = "voice.mp3"
+    tts.save(output_file)
 
-    tts = gTTS(text=text, lang="tr")
-
-    file_path = "voice.mp3"
-    tts.save(file_path)
-
-    return file_path
+    return output_file
 
 
 def build_video(images, audio_file, duration_per_image):
