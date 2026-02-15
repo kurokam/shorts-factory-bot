@@ -8,6 +8,7 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
 )
+from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
 from PIL import Image
 from io import BytesIO
 import urllib.parse
@@ -120,28 +121,23 @@ def generate_voice(text):
     return "voice.mp3"
 
 
-def build_video(image_paths, audio_path, duration_per_scene):
-    input_txt = "inputs.txt"
+def build_video(images, audio_file, duration_per_image):
 
-    with open(input_txt, "w") as f:
-        for img in image_paths:
-            f.write(f"file '{img}'\n")
-            f.write(f"duration {duration_per_scene}\n")
+    clips = []
 
-    subprocess.run([
-        "ffmpeg",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", input_txt,
-        "-i", audio_path,
-        "-vf", "scale=1080:1920",
-        "-pix_fmt", "yuv420p",
-        "-shortest",
-        "final.mp4",
-        "-y"
-    ])
+    for img in images:
+        clip = ImageClip(img).set_duration(duration_per_image)
+        clips.append(clip)
 
-    return "final.mp4"
+    video = concatenate_videoclips(clips, method="compose")
+
+    audio = AudioFileClip(audio_file)
+    video = video.set_audio(audio)
+
+    output_path = "final_video.mp4"
+    video.write_videofile(output_path, fps=24)
+
+    return output_path
 
 
 # ---------------- TELEGRAM COMMANDS ---------------- #
