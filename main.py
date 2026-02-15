@@ -61,26 +61,42 @@ Hikaye:
 
 def generate_image(prompt, index):
 
-    clean_prompt = urllib.parse.quote(
-        f"{prompt}, cinematic lighting, ultra realistic, vertical 9:16"
-    )
+    query = prompt.split(",")[0][:50]
 
-    image_url = f"https://image.pollinations.ai/prompt/{clean_prompt}"
+    url = "https://api.pexels.com/v1/search"
 
-    response = requests.get(image_url, timeout=60)
+    headers = {
+        "Authorization": os.getenv("PEXELS_API_KEY")
+    }
+
+    params = {
+        "query": query,
+        "per_page": 1,
+        "orientation": "portrait"
+    }
+
+    response = requests.get(url, headers=headers, params=params)
 
     if response.status_code != 200:
-        print("Status:", response.status_code)
-        print("Response:", response.text)
-        raise Exception("Pollinations error")
+        print(response.text)
+        raise Exception("Pexels API error")
 
-    image = Image.open(BytesIO(response.content))
+    data = response.json()
+
+    if not data["photos"]:
+        raise Exception("No image found")
+
+    image_url = data["photos"][0]["src"]["large"]
+
+    img_response = requests.get(image_url)
+    image = Image.open(BytesIO(img_response.content))
     image = image.resize((768, 1024))
 
-    file_path = f"scene_{index}.png"
+    file_path = f"scene_{index}.jpg"
     image.save(file_path)
 
     return file_path
+
 
 
 def generate_voice(text):
