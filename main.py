@@ -106,7 +106,7 @@ def generate_voice(text):
     import os
     import requests
 
-    ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
+    ELEVEN_API_KEY = os.getenv("ELEVENLABS_API_KEY")
     VOICE_ID = "EXAVITQu4vr4xnSDxMaL"
 
     ELEVEN_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
