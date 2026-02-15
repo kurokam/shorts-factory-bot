@@ -103,6 +103,19 @@ def generate_image(prompt, index):
 
 def generate_voice(text):
 
+    import os
+    import requests
+
+    ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
+    VOICE_ID = "EXAVITQu4vr4xnSDxMaL"
+
+    ELEVEN_URL = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
+
+    headers = {
+        "xi-api-key": ELEVEN_API_KEY,
+        "Content-Type": "application/json"
+    }
+
     payload = {
         "text": text,
         "model_id": "eleven_multilingual_v2",
