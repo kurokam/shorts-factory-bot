@@ -100,20 +100,6 @@ def generate_image(prompt, index):
     return file_path
 
 
-
-def generate_voice(text):
-
-    from gtts import gTTS
-
-    tts = gTTS(text=text, lang="tr")
-# ---------------- GENERATE VOICE ---------------- #
-from gtts import gTTS
-import re
-
-    file_path = "voice.mp3"
-    tts.save(file_path)
-
-    return file_path
 def generate_voice(text):
     """
     Converts text to speech using gTTS.
