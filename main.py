@@ -11,6 +11,7 @@ from telegram.ext import (
 )
 from groq import Groq
 from youtube_manager import upload_video
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
 # ENV
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -30,7 +31,7 @@ Konu: {topic}
 """
 
     response = client.chat.completions.create(
-        model="llama3-70b-8192",
+        model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}]
     )
 
@@ -47,7 +48,7 @@ Hikaye:
 """
 
     response = client.chat.completions.create(
-        model="llama3-70b-8192",
+        model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}]
     )
 
