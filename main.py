@@ -58,30 +58,23 @@ Hikaye:
 
 
 def generate_image(prompt, index):
-    API_URL = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
-
+    API_URL = "https://router.huggingface.co/hf-inference/models/CompVis/stable-diffusion-v1-5"
     headers = {
-        "Authorization": f"Bearer {os.getenv('HF_API_KEY')}",
-        "Content-Type": "application/json"
+        "Authorization": f"Bearer {os.getenv('HF_API_KEY')}"
     }
-
     payload = {
-        "inputs": f"{prompt}, cinematic lighting, ultra realistic, vertical 9:16",
+        "inputs": f"{prompt}, 9:16 vertical, cinematic",
         "options": {"wait_for_model": True}
     }
-
     response = requests.post(API_URL, headers=headers, json=payload)
 
     if response.status_code != 200:
         raise Exception(f"HF Error: {response.text}")
 
     image = Image.open(BytesIO(response.content))
-
-    image = image.resize((768, 1024))
-
+    image = image.resize((768,1024))
     file_path = f"scene_{index}.png"
     image.save(file_path)
-
     return file_path
 
 
