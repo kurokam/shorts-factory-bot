@@ -127,6 +127,8 @@ def generate_voice(text):
         headers=headers,
         json=payload
     )
+    print("STATUS:", response.status_code)
+    print("RESPONSE:", response.text)
 
     if response.status_code != 200:
         print("TTS ERROR:", response.text)
