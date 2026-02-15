@@ -6,3 +6,4 @@ replicate
 requests
 ffmpeg-python
 groq
+pillow
