@@ -114,9 +114,14 @@ No text, no subtitles.
 
 
 
-def generate_image(prompt, index):
+def generate_image(scene_text, index):
 
-    query = prompt.split(",")[0][:50]
+    def extract_keywords(text):
+        words = text.split()
+        keywords = [w for w in words if len(w) > 4]
+        return " ".join(keywords[:5])
+
+    query = extract_keywords(scene_text)
 
     url = "https://api.pexels.com/v1/search"
 
@@ -126,7 +131,7 @@ def generate_image(prompt, index):
 
     params = {
         "query": query,
-        "per_page": 1,
+        "per_page": 5,
         "orientation": "portrait"
     }
 
@@ -139,9 +144,10 @@ def generate_image(prompt, index):
     data = response.json()
 
     if not data["photos"]:
-        raise Exception("No image found")
+        raise Exception(f"No image found for query: {query}")
 
-    image_url = data["photos"][0]["src"]["large"]
+    photo = random.choice(data["photos"])
+    image_url = photo["src"]["large"]
 
     img_response = requests.get(image_url)
     image = Image.open(BytesIO(img_response.content))
@@ -263,15 +269,16 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 1️⃣ Hikaye üret
     story = generate_story(topic, duration)
 
-    # 2️⃣ Sahne promptları üret
-    scenes = generate_scene_prompts(story)
+    # Story'yi cümlelere böl
+    scenes = story.split("\n")
 
-    # 3️⃣ Sadece hikayeyi sese çevir
+    # 2️⃣ Sesi üret
     voice = generate_voice(story)
 
     await update.message.reply_text("🎨 Generating images...")
 
     images = []
+
     for i, scene in enumerate(scenes):
         images.append(generate_image(scene, i))
 
