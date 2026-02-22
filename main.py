@@ -31,8 +31,14 @@ client = Groq(api_key=GROQ_API_KEY)
 
 def generate_story(topic, duration):
     prompt = f"""
-{duration} saniyelik sinematik ve gerçekçi YouTube Shorts hikayesi yaz.
-Konu: {topic}
+Write a cinematic and realistic YouTube Shorts story in English.
+Duration: {duration} seconds
+Topic: {topic}
+
+Make it emotional, immersive and suitable for voice-over.
+Do not add scene numbers.
+Do not explain anything.
+Only write the story.
 """
 
     response = client.chat.completions.create(
@@ -45,10 +51,14 @@ Konu: {topic}
 
 def generate_scene_prompts(story, scene_count):
     prompt = f"""
-Bu hikayeyi {scene_count} sahneye böl.
-Her satır bir sahne için görsel üretim promptu olsun.
-Sadece prompt ver, numara koyma.
-Hikaye:
+Divide this story into {scene_count} visual scenes.
+
+Each line must be a realistic cinematic image generation prompt in English.
+No numbers.
+No explanations.
+Only visual prompts.
+
+Story:
 {story}
 """
 
@@ -58,7 +68,7 @@ Hikaye:
     )
 
     scenes = response.choices[0].message.content.split("\n")
-    return [s.strip() for s in scenes if len(s.strip()) > 10]
+    return [s.strip() for s in scenes if len(s.strip()) > 15]
 
 
 
@@ -101,8 +111,13 @@ def generate_image(prompt, index):
     return file_path
 
 
+import re
+
 def generate_voice(text):
-    tts = gTTS(text=text, lang="tr")
+    # Noktalama temizle
+    clean_text = re.sub(r"[^\w\s]", "", text)
+
+    tts = gTTS(text=clean_text, lang="en")
     output_file = "voice.mp3"
     tts.save(output_file)
 
@@ -169,7 +184,12 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("🚀 YouTube'a yükleniyor...")
 
-    video_id = upload_video(video, topic, story, tags=["shorts", "ai", topic])
+    video_id = upload_video(
+    video,
+    title=topic,
+    description=f"{topic} | AI Generated Short",
+    tags=["shorts", "AI", topic]
+)
 
     await update.message.reply_text(
         f"✅ Yüklendi!\nhttps://youtube.com/watch?v={video_id}"
