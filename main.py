@@ -316,7 +316,7 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("🧠 Generating script...")
 
-    story = generate_story(topic, duration, style)
+    story = generate_story(topic, duration)
     scenes = story.split("\n")
     voice = generate_voice(story)
 
