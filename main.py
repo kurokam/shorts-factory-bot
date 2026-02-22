@@ -157,6 +157,32 @@ def build_video(images, audio_file):
 
     return output_path
 
+def generate_tags(topic):
+    prompt = f"""
+Generate viral YouTube Shorts tags.
+
+Rules:
+- Only comma separated tags
+- No hashtags
+- No explanation
+- 15-20 tags
+- Mix broad + niche + long tail
+- English
+
+Topic: {topic}
+"""
+
+    response = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    tags_text = response.choices[0].message.content.strip()
+
+    tags = [tag.strip() for tag in tags_text.split(",") if len(tag.strip()) > 2]
+
+    return tags
+
 
 # ---------------- TELEGRAM COMMANDS ---------------- #
 
@@ -197,15 +223,16 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🎬 Building video...")
 
     video = build_video(images, voice)
+    tags = generate_tags(topic)
 
     await update.message.reply_text("🚀 YouTube'a yükleniyor...")
 
     video_id = upload_video(
-        video,
-        title=topic,
-        description=f"{topic} | AI Generated Shorts",
-        tags=["shorts", "AI", topic]
-    )
+    video,
+    title=topic,
+    description=f"{topic} | AI Generated Shorts",
+    tags=tags
+)
 
     await update.message.reply_text(
         f"✅ Yüklendi!\nhttps://youtube.com/watch?v={video_id}"
