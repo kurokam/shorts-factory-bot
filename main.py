@@ -343,11 +343,11 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("duration", set_duration))
-    application.add_handler(CommandHandler("style", set_style))
-    application.add_handler(CommandHandler("upload", set_upload))
-    application.add_handler(CommandHandler("topic", set_topic))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("duration", set_duration))
+    app.add_handler(CommandHandler("style", set_style))
+    app.add_handler(CommandHandler("upload", set_upload))
+    app.add_handler(CommandHandler("topic", set_topic))
 
     print("Bot çalışıyor...")
     app.run_polling()
