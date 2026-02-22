@@ -115,14 +115,18 @@ No text, no subtitles.
 
 
 
-def generate_image(scene_text, index):
+def generate_image(scene, index, topic=None):
 
-    def extract_keywords(text):
-        words = text.split()
-        keywords = [w for w in words if len(w) > 4]
-        return " ".join(keywords[:5])
+    import os
+    import random
+    import requests
+    from PIL import Image
+    from io import BytesIO
 
-    query = extract_keywords(scene_text)
+    # 1️⃣ Prompt temizleme (Pexels için optimize)
+    clean = scene.replace(".", "").replace(",", "")
+    words = clean.split()[:6]  # ilk 6 kelime
+    query = " ".join(words)
 
     url = "https://api.pexels.com/v1/search"
 
@@ -132,7 +136,7 @@ def generate_image(scene_text, index):
 
     params = {
         "query": query,
-        "per_page": 5,
+        "per_page": 5,  # random için 5 sonuç al
         "orientation": "portrait"
     }
 
@@ -144,18 +148,33 @@ def generate_image(scene_text, index):
 
     data = response.json()
 
-    if not data["photos"]:
-        raise Exception(f"No image found for query: {query}")
+    # 2️⃣ Fallback (hiç sonuç yoksa)
+    if not data.get("photos"):
+        if topic:
+            params["query"] = topic
+            response = requests.get(url, headers=headers, params=params)
+            data = response.json()
 
+        if not data.get("photos"):
+            raise Exception("No image found even after fallback")
+
+    # 3️⃣ Random görsel seç
     photo = random.choice(data["photos"])
-    image_url = photo["src"]["large"]
+
+    # 4️⃣ Daha kaliteli versiyon
+    image_url = photo["src"].get("large2x") or photo["src"]["large"]
 
     img_response = requests.get(image_url)
-    image = Image.open(BytesIO(img_response.content))
-    image = image.resize((768, 1024))
+    image = Image.open(BytesIO(img_response.content)).convert("RGB")
+
+    # 5️⃣ Shorts format (9:16)
+    target_width = 768
+    target_height = 1024
+
+    image = image.resize((target_width, target_height))
 
     file_path = f"scene_{index}.jpg"
-    image.save(file_path)
+    image.save(file_path, quality=95)
 
     return file_path
 
@@ -279,9 +298,8 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🎨 Generating images...")
 
     images = []
-
     for i, scene in enumerate(scenes):
-        images.append(generate_image(scene, i))
+        images.append(generate_image(scene, i, topic))
 
     await update.message.reply_text("🎬 Building video...")
 
