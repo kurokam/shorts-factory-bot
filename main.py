@@ -31,14 +31,20 @@ client = Groq(api_key=GROQ_API_KEY)
 
 def generate_story(topic, duration):
     prompt = f"""
-Write a cinematic and realistic YouTube Shorts story in English.
-Duration: {duration} seconds
-Topic: {topic}
+Create a viral YouTube Shorts script in English.
 
-Make it emotional, immersive and suitable for voice-over.
-Do not add scene numbers.
-Do not explain anything.
-Only write the story.
+Format:
+- Start with a powerful 1 sentence hook.
+- Then give 4-6 shocking, mind-blowing facts.
+- Short punchy sentences.
+- Each sentence separate line.
+- No numbering.
+- No explanations.
+- No titles.
+- Only narration text.
+
+Topic: {topic}
+Length: about {duration} seconds.
 """
 
     response = client.chat.completions.create(
@@ -46,7 +52,7 @@ Only write the story.
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.choices[0].message.content
+    return response.choices[0].message.content.strip()
 
 
 def generate_scene_prompts(story, scene_count):
@@ -112,14 +118,29 @@ def generate_image(prompt, index):
 
 
 import re
+from pydub import AudioSegment
+from gtts import gTTS
 
 def generate_voice(text):
-    # Noktalama temizle
-    clean_text = re.sub(r"[^\w\s]", "", text)
 
-    tts = gTTS(text=clean_text, lang="en")
+    # Noktalama temizle ama satırları koru
+    text = re.sub(r"[^\w\s\n]", "", text)
+
+    lines = [line.strip() for line in text.split("\n") if len(line.strip()) > 3]
+
+    final_audio = AudioSegment.empty()
+
+    for line in lines:
+        tts = gTTS(text=line, lang="en")
+        tts.save("temp.mp3")
+
+        segment = AudioSegment.from_mp3("temp.mp3")
+        pause = AudioSegment.silent(duration=350)  # 0.35 sn doğal durak
+
+        final_audio += segment + pause
+
     output_file = "voice.mp3"
-    tts.save(output_file)
+    final_audio.export(output_file, format="mp3")
 
     return output_file
 
@@ -162,23 +183,24 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     topic = " ".join(context.args)
     duration = context.user_data.get("duration", 60)
 
-    await update.message.reply_text("🧠 Hikaye üretiliyor...")
+    await update.message.reply_text("🧠 Generating script...")
 
+    # 1️⃣ Hikaye üret
     story = generate_story(topic, duration)
 
-    await update.message.reply_text("🎨 Görseller hazırlanıyor...")
-
+    # 2️⃣ Sahne promptları üret
     scenes = generate_scene_prompts(story, max(3, duration // 10))
+
+    # 3️⃣ Sadece hikayeyi sese çevir
+    voice = generate_voice(story)
+
+    await update.message.reply_text("🎨 Generating images...")
 
     images = []
     for i, scene in enumerate(scenes):
         images.append(generate_image(scene, i))
 
-    await update.message.reply_text("🎙 Ses oluşturuluyor...")
-
-    voice = generate_voice(story)
-
-    await update.message.reply_text("🎬 Video oluşturuluyor...")
+    await update.message.reply_text("🎬 Building video...")
 
     video = build_video(images, voice, duration // len(images))
 
