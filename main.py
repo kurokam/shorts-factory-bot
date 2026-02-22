@@ -118,29 +118,18 @@ def generate_image(prompt, index):
 
 
 import re
-from pydub import AudioSegment
 from gtts import gTTS
 
 def generate_voice(text):
 
-    # Noktalama temizle ama satırları koru
     text = re.sub(r"[^\w\s\n]", "", text)
-
     lines = [line.strip() for line in text.split("\n") if len(line.strip()) > 3]
 
-    final_audio = AudioSegment.empty()
+    combined_text = ". ".join(lines)  # doğal durak etkisi
 
-    for line in lines:
-        tts = gTTS(text=line, lang="en")
-        tts.save("temp.mp3")
-
-        segment = AudioSegment.from_mp3("temp.mp3")
-        pause = AudioSegment.silent(duration=350)  # 0.35 sn doğal durak
-
-        final_audio += segment + pause
-
+    tts = gTTS(text=combined_text, lang="en")
     output_file = "voice.mp3"
-    final_audio.export(output_file, format="mp3")
+    tts.save(output_file)
 
     return output_file
 
@@ -190,26 +179,33 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("🧠 Generating script...")
 
-story = generate_story(topic, duration)
+    # 1️⃣ Hikaye üret
+    story = generate_story(topic, duration)
 
-scenes = generate_scene_prompts(story, max(3, duration // 10))
+    # 2️⃣ Sahne promptları üret
+    scenes = generate_scene_prompts(story, max(3, duration // 10))
 
-voice = generate_voice(story)
+    # 3️⃣ Sadece hikayeyi sese çevir
+    voice = generate_voice(story)
 
-images = []
-for i, scene in enumerate(scenes):
-    images.append(generate_image(scene, i))
+    await update.message.reply_text("🎨 Generating images...")
 
-video = build_video(images, voice)
+    images = []
+    for i, scene in enumerate(scenes):
+        images.append(generate_image(scene, i))
+
+    await update.message.reply_text("🎬 Building video...")
+
+    video = build_video(images, voice)
 
     await update.message.reply_text("🚀 YouTube'a yükleniyor...")
 
     video_id = upload_video(
-    video,
-    title=topic,
-    description=f"{topic} | AI Generated Short",
-    tags=["shorts", "AI", topic]
-)
+        video,
+        title=topic,
+        description=f"{topic} | AI Generated Shorts",
+        tags=["shorts", "AI", topic]
+    )
 
     await update.message.reply_text(
         f"✅ Yüklendi!\nhttps://youtube.com/watch?v={video_id}"
