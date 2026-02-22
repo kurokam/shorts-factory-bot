@@ -31,16 +31,17 @@ client = Groq(api_key=GROQ_API_KEY)
 
 def generate_story(topic, duration):
     prompt = f"""
-Create a viral YouTube Shorts script in English.
+Write a viral YouTube Shorts facts script in English.
 
-Format:
-- Start with a powerful 1 sentence hook.
-- Then give 4-6 shocking, mind-blowing facts.
-- Short punchy sentences.
-- Each sentence separate line.
-- No numbering.
-- No explanations.
-- No titles.
+STRICT RULES:
+- DO NOT write titles.
+- DO NOT write labels like Hook, Fact, Scene.
+- DO NOT number anything.
+- DO NOT explain.
+- DO NOT add extra words.
+- First line must be a powerful hook sentence.
+- After that give short punchy facts.
+- Each sentence on a new line.
 - Only narration text.
 
 Topic: {topic}
@@ -52,7 +53,30 @@ Length: about {duration} seconds.
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.choices[0].message.content.strip()
+    story = response.choices[0].message.content.strip()
+    return clean_story(story)
+
+import re
+
+def clean_story(text):
+    lines = text.split("\n")
+
+    cleaned = []
+    for line in lines:
+        line = line.strip()
+
+        # hook, fact, scene gibi başlayanları temizle
+        if re.match(r"^(hook|fact|scene|\d+)", line.lower()):
+            continue
+
+        # colon içeren açıklamaları at
+        if ":" in line and len(line.split()) < 6:
+            continue
+
+        if len(line) > 5:
+            cleaned.append(line)
+
+    return "\n".join(cleaned)
 
 
 def generate_scene_prompts(story, scene_count):
