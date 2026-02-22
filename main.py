@@ -269,30 +269,55 @@ def clean_tags(tags):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🎬 AI Shorts Bot\n\n"
-        "/sure 60\n"
-        "/konu Terk edilmiş hastane"
+        "🚀 AI Shorts Bot Ready!\n\n"
+        "/topic <konu>\n"
+        "/duration <saniye>\n"
+        "/style <normal/dark/money>\n"
+        "/upload <on/off>"
     )
 
 
 async def set_duration(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["duration"] = int(context.args[0])
-    await update.message.reply_text("✅ Süre kaydedildi.")
+    try:
+        duration = int(context.args[0])
+        context.user_data["duration"] = duration
+        await update.message.reply_text(f"⏱ Duration set to {duration} seconds.")
+    except:
+        await update.message.reply_text("❌ Example: /duration 45")
+
+async def set_style(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    style = context.args[0].lower()
+
+    if style not in ["normal", "dark", "money"]:
+        await update.message.reply_text("❌ Use: normal / dark / money")
+        return
+
+    context.user_data["style"] = style
+    await update.message.reply_text(f"🎬 Style set to {style}")
+
+async def set_upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    mode = context.args[0].lower()
+
+    if mode not in ["on", "off"]:
+        await update.message.reply_text("❌ Use: /upload on or off")
+        return
+
+    context.user_data["upload"] = mode
+    await update.message.reply_text(f"📤 Upload mode: {mode}")
 
 
 async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     topic = " ".join(context.args)
-    duration = context.user_data.get("duration", 60)
+
+    duration = context.user_data.get("duration", 45)
+    style = context.user_data.get("style", "normal")
+    upload_mode = context.user_data.get("upload", "off")
 
     await update.message.reply_text("🧠 Generating script...")
 
-    # 1️⃣ Hikaye üret
-    story = generate_story(topic, duration)
-
-    # Story'yi cümlelere böl
+    story = generate_story(topic, duration, style)
     scenes = story.split("\n")
-
-    # 2️⃣ Sesi üret
     voice = generate_voice(story)
 
     await update.message.reply_text("🎨 Generating images...")
@@ -301,23 +326,16 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i, scene in enumerate(scenes):
         images.append(generate_image(scene, i, topic))
 
-    await update.message.reply_text("🎬 Building video...")
-
     video = build_video(images, voice)
-    tags = generate_tags(topic)
 
-    await update.message.reply_text("🚀 YouTube'a yükleniyor...")
-
-    video_id = upload_video(
-    video,
-    title=topic,
-    description=f"{topic} | AI Generated Shorts",
-    tags=tags
-)
-
-    await update.message.reply_text(
-        f"✅ Yüklendi!\nhttps://youtube.com/watch?v={video_id}"
-    )
+    if upload_mode == "on":
+        await update.message.reply_text("🚀 Uploading to YouTube...")
+        video_id = upload_video(video, title=topic)
+        await update.message.reply_text(
+            f"✅ Uploaded!\nhttps://youtube.com/watch?v={video_id}"
+        )
+    else:
+        await update.message.reply_text("✅ Video created (upload off).")
 
 
 # ---------------- MAIN ---------------- #
