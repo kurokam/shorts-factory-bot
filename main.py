@@ -183,16 +183,11 @@ def build_video(images, audio_file):
 
 def generate_tags(topic):
     prompt = f"""
-Generate viral YouTube Shorts tags.
-
-Rules:
-- Only comma separated tags
-- No hashtags
-- No explanation
-- 15-20 tags
-- Mix broad + niche + long tail
-- English
-
+Generate YouTube Shorts tags.
+Only comma separated.
+No hashtags.
+Max 20.
+English only.
 Topic: {topic}
 """
 
@@ -202,10 +197,34 @@ Topic: {topic}
     )
 
     tags_text = response.choices[0].message.content.strip()
+    raw_tags = [t.strip() for t in tags_text.split(",")]
 
-    tags = [tag.strip() for tag in tags_text.split(",") if len(tag.strip()) > 2]
+    return clean_tags(raw_tags)
 
-    return tags
+import re
+
+def clean_tags(tags):
+
+    cleaned = []
+
+    for tag in tags:
+        tag = tag.strip()
+
+        # hashtag kaldır
+        tag = tag.replace("#", "")
+
+        # özel karakter temizle
+        tag = re.sub(r"[^a-zA-Z0-9\s]", "", tag)
+
+        # çok uzunsa at
+        if len(tag) > 30:
+            continue
+
+        if len(tag) > 2:
+            cleaned.append(tag)
+
+    # max 15 tag (YouTube güvenli sınır)
+    return cleaned[:15]
 
 
 # ---------------- TELEGRAM COMMANDS ---------------- #
