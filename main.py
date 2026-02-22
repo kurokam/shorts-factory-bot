@@ -145,17 +145,22 @@ def generate_voice(text):
     return output_file
 
 
-def build_video(images, audio_file, duration_per_image):
+from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
+
+def build_video(images, audio_file):
+
+    audio = AudioFileClip(audio_file)
+    total_audio_duration = audio.duration
+
+    image_count = len(images)
+    duration_per_image = total_audio_duration / image_count
 
     clips = []
-
     for img in images:
         clip = ImageClip(img).set_duration(duration_per_image)
         clips.append(clip)
 
     video = concatenate_videoclips(clips, method="compose")
-
-    audio = AudioFileClip(audio_file)
     video = video.set_audio(audio)
 
     output_path = "final_video.mp4"
@@ -185,24 +190,17 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("🧠 Generating script...")
 
-    # 1️⃣ Hikaye üret
-    story = generate_story(topic, duration)
+   story = generate_story(topic, duration)
 
-    # 2️⃣ Sahne promptları üret
-    scenes = generate_scene_prompts(story, max(3, duration // 10))
+scenes = generate_scene_prompts(story, max(3, duration // 10))
 
-    # 3️⃣ Sadece hikayeyi sese çevir
-    voice = generate_voice(story)
+voice = generate_voice(story)
 
-    await update.message.reply_text("🎨 Generating images...")
+images = []
+for i, scene in enumerate(scenes):
+    images.append(generate_image(scene, i))
 
-    images = []
-    for i, scene in enumerate(scenes):
-        images.append(generate_image(scene, i))
-
-    await update.message.reply_text("🎬 Building video...")
-
-    video = build_video(images, voice, duration // len(images))
+video = build_video(images, voice)
 
     await update.message.reply_text("🚀 YouTube'a yükleniyor...")
 
