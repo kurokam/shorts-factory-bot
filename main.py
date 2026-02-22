@@ -54,6 +54,7 @@ Length: about {duration} seconds.
     )
 
     story = response.choices[0].message.content.strip()
+    story = split_story_lines(story)
     return clean_story(story)
 
 import re
@@ -77,6 +78,18 @@ def clean_story(text):
             cleaned.append(line)
 
     return "\n".join(cleaned)
+
+def split_story_lines(story):
+
+    sentences = story.replace("?", ".").replace("!", ".").split(".")
+    lines = []
+
+    for s in sentences:
+        s = s.strip()
+        if len(s) > 8:
+            lines.append(s)
+
+    return "\n".join(lines)
 
 
 def generate_scene_prompts(story):
