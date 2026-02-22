@@ -79,26 +79,25 @@ def clean_story(text):
     return "\n".join(cleaned)
 
 
-def generate_scene_prompts(story, scene_count):
-    prompt = f"""
-Divide this story into {scene_count} visual scenes.
+def generate_scene_prompts(story):
 
-Each line must be a realistic cinematic image generation prompt in English.
-No numbers.
-No explanations.
-Only visual prompts.
+    lines = [line.strip() for line in story.split("\n") if len(line.strip()) > 5]
 
-Story:
-{story}
+    scene_prompts = []
+
+    for line in lines:
+        prompt = f"""
+Ultra realistic cinematic scene.
+
+Depict: {line}
+
+Hyper detailed, volumetric lighting, depth of field,
+epic atmosphere, dramatic shadows, 8k, film still.
+No text, no subtitles.
 """
+        scene_prompts.append(prompt.strip())
 
-    response = client.chat.completions.create(
-        model=GROQ_MODEL,
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    scenes = response.choices[0].message.content.split("\n")
-    return [s.strip() for s in scenes if len(s.strip()) > 15]
+    return scene_prompts
 
 
 
@@ -252,7 +251,7 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     story = generate_story(topic, duration)
 
     # 2️⃣ Sahne promptları üret
-    scenes = generate_scene_prompts(story, max(3, duration // 10))
+    scenes = generate_scene_prompts(story)
 
     # 3️⃣ Sadece hikayeyi sese çevir
     voice = generate_voice(story)
