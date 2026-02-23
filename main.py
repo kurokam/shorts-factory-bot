@@ -330,7 +330,19 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if upload_mode == "on":
         await update.message.reply_text("🚀 Uploading to YouTube...")
-        video_id = upload_video(video, title=topic)
+        from googleapiclient.errors import HttpError
+
+try:
+    video_id = upload_video(video, title=topic)
+
+except HttpError as e:
+    if "uploadLimitExceeded" in str(e):
+        await update.message.reply_text("⚠️ YouTube upload limiti doldu.")
+        return
+    else:
+        await update.message.reply_text("❌ YouTube upload hatası oluştu.")
+        print(e)
+        return
         await update.message.reply_text(
             f"✅ Uploaded!\nhttps://youtube.com/watch?v={video_id}"
         )
@@ -339,6 +351,9 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ---------------- MAIN ---------------- #
+async def error_handler(update, context):
+    print(f"Exception: {context.error}")
+
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
@@ -348,6 +363,7 @@ def main():
     app.add_handler(CommandHandler("style", set_style))
     app.add_handler(CommandHandler("upload", set_upload))
     app.add_handler(CommandHandler("topic", set_topic))
+    app.add_error_handler(error_handler)
 
     print("Bot çalışıyor...")
     app.run_polling()
