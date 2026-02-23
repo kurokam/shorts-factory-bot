@@ -330,6 +330,9 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if upload_mode == "on":
         await update.message.reply_text("🚀 Uploading to YouTube...")
+    else:
+        await update.message.reply_text("✅ Video created (upload off).")
+
         from googleapiclient.errors import HttpError
 
 try:
@@ -346,8 +349,6 @@ except HttpError as e:
         await update.message.reply_text(
             f"✅ Uploaded!\nhttps://youtube.com/watch?v={video_id}"
         )
-    else:
-        await update.message.reply_text("✅ Video created (upload off).")
 
 
 # ---------------- MAIN ---------------- #
