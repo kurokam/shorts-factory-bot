@@ -340,7 +340,7 @@ try:
 
 except HttpError as e:
     if "uploadLimitExceeded" in str(e):
-          await update.message.reply_text("⚠️ YouTube upload limiti doldu.")
+        await update.message.reply_text("⚠️ YouTube upload limiti doldu.")
         return
     else:
         await update.message.reply_text("❌ YouTube upload hatası oluştu.")
