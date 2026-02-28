@@ -340,7 +340,11 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🚀 Uploading to YouTube...")
 
         try:
-            video_id = upload_video(video, title=topic)
+            video_id = upload_video(
+                video,
+                title=topic,
+                description=story
+            )
 
             await update.message.reply_text(
                 f"✅ Uploaded!\nhttps://youtube.com/watch?v={video_id}"
