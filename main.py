@@ -308,6 +308,10 @@ async def set_upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    if not context.args:
+        await update.message.reply_text("Konu gir: /topic space facts")
+        return
+
     topic = " ".join(context.args)
 
     duration = context.user_data.get("duration", 45)
@@ -328,27 +332,31 @@ async def set_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     video = build_video(images, voice)
 
+    # 🔥 Upload kontrolü BURADA ve girintili
+    from googleapiclient.errors import HttpError
+
     if upload_mode == "on":
+
         await update.message.reply_text("🚀 Uploading to YouTube...")
+
+        try:
+            video_id = upload_video(video, title=topic)
+
+            await update.message.reply_text(
+                f"✅ Uploaded!\nhttps://youtube.com/watch?v={video_id}"
+            )
+
+        except HttpError as e:
+            if "uploadLimitExceeded" in str(e):
+                await update.message.reply_text("⚠️ YouTube upload limiti doldu.")
+            else:
+                await update.message.reply_text("❌ YouTube upload hatası oluştu.")
+
+            print(e)
+            return
+
     else:
         await update.message.reply_text("✅ Video created (upload off).")
-
-        from googleapiclient.errors import HttpError
-
-try:
-    video_id = upload_video(video, title=topic)
-
-except HttpError as e:
-    if "uploadLimitExceeded" in str(e):
-        await update.message.reply_text("⚠️ YouTube upload limiti doldu.")
-        return
-    else:
-        await update.message.reply_text("❌ YouTube upload hatası oluştu.")
-        print(e)
-        return
-        await update.message.reply_text(
-            f"✅ Uploaded!\nhttps://youtube.com/watch?v={video_id}"
-        )
 
 
 # ---------------- MAIN ---------------- #
