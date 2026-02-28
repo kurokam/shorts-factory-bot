@@ -10,6 +10,11 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
 )
+import json
+import os
+
+with open("credentials.json", "w") as f:
+    f.write(os.getenv("YOUTUBE_CREDENTIALS"))
 from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
 from PIL import Image
 from io import BytesIO
